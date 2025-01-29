@@ -29,7 +29,7 @@ class TempFolderManager:
         """Create tmp folder and make it persistent"""
         self.folder_path.mkdir(exist_ok=True)
         self.is_valid = True
-        logging.info("tmp was deleted. Recreating... : %s", self.folder_path)
+        logging.info("tmp doesn't exist. creating... : %s", self.folder_path)
 
     def count_files(self):
         """Count number of files in the folder with error handling"""
@@ -51,11 +51,11 @@ class TempFolderManager:
             self.is_valid = False
             return []
 
-def create_archive(folder_path, files_to_archive, batch_num):
+def create_archive(folder_path, files_to_archive):
     """Create tar.gz archive with timestamp in name"""
     # Generate timestamp for archive name
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    archive_name = f'files_{timestamp}_batch{batch_num}.tar.gz'
+    archive_name = f'files_{timestamp}.tar.gz'
     archive_path = Path.cwd() / archive_name
     
     try:
@@ -87,41 +87,39 @@ def remove_files(folder_path, files_to_remove, archive_name):
     logging.info(f"Removed archived files from tmp folder - archived in: {archive_name}")
 
 def main():
+    REQUIRED_FILES = 10
     tmp_folder = Path.cwd() / 'tmp'
     
     with TempFolderManager(tmp_folder) as folder_mgr:
         while True:
             try:
-                # Count files in tmp folder
+                #count files in tmp
                 num_files = folder_mgr.count_files()
                 
-                # If we have files to process
-                if num_files > 0:
+                #only proceed if we have exactly 10 files
+                if num_files >= REQUIRED_FILES:
                     # Get list of all files
                     all_files = folder_mgr.get_files()
                     
-                    # Calculate number of complete batches (10 files each)
-                    num_batches = (len(all_files) + 9) // 10  # Round up division
+                    #wait for 10 files and create archive with 10 files
+                    files_to_archive = all_files[:REQUIRED_FILES]
                     
-                    # Process each batch
-                    for batch in range(num_batches):
-                        start_idx = batch * 10
-                        end_idx = min(start_idx + 10, len(all_files))
-                        batch_files = all_files[start_idx:end_idx]
-                        
-                        # Create archive for this batch
-                        archive_name = create_archive(tmp_folder, batch_files, batch + 1)
-                        if archive_name:
-                            # Only remove files if archive was created successfully
-                            remove_files(tmp_folder, batch_files, archive_name)
-                            logging.info("files collected")
+                    #create archive
+                    archive_name = create_archive(tmp_folder, files_to_archive)
+                    if archive_name:
+                        #only delete files from tmp if archive was created successfully
+                        remove_files(tmp_folder, files_to_archive, archive_name)
+                        logging.info("Archived the following files:")
+                        for file_name in files_to_archive:
+                            logging.info(f"  - {file_name}")
+                        logging.info("Files collected")
                 
             except Exception as e:
                 logging.error(f"An error occurred in main loop: {e}")
                 time.sleep(5)  # Wait longer on error before retrying
                 continue
                 
-            # Wait before next check
+            #wait time before next check and archive
             time.sleep(1)
 
 if __name__ == "__main__":
