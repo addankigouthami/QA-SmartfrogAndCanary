@@ -1,0 +1,8 @@
+# No external dependencies required for this project
+# All modules used are from Python standard library:
+# - os
+# - time
+# - tarfile
+# - logging
+# - pathlib
+# - datetime
