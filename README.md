@@ -82,7 +82,7 @@ python3 archiver.py <number of files to be created>
 
 - The `archiver.py` creates files by continuously adding N files specified during the run in the cli to the `tmp` folder for testing purposes. Defaulted to 10.
 
-- If the script is run in the background, you have to do a kill -9 <PID of background_archiver.py> to kill the process
+- If the script is run in the background, you have to do a kill -9 < PID of background_archiver.py > to kill the process
 
 ## Repository Structure
 
